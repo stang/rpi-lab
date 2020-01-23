@@ -1,0 +1,34 @@
+#!/bin/bash
+set -ue
+
+ansible_build() {
+  docker build -t ansible -f ./docker/Dockerfile ./docker
+}
+
+# workarounds for MacOS:
+#  - using predictable user as we can't mount '/etc/passwd' to the container
+#  - use ssh agent socket from "Docker for Mac" (see: https://github.com/docker/for-mac/issues/410)
+#    I had to manually 'chmod' the socket in the Docker for Mac VM as I wanted to run as non-root
+#
+#       docker run --rm -it -v /:/vm-root alpine:edge chmod 777 /vm-root/run/host-services/ssh-auth.sock
+ansible() {
+  docker run --init=false -it --rm --user=1000:1000 --net=host \
+    --mount type=tmpfs,destination=/home/ansible \
+    -v ${HOME}/.ssh:/home/ansible/.ssh:ro \
+    -v ${PWD}:/workdir --workdir /workdir \
+    -v /run/host-services/ssh-auth.sock:/run/host-services/ssh-auth.sock \
+    -e SSH_AUTH_SOCK=/run/host-services/ssh-auth.sock \
+    -v /tmp:/tmp \
+    ansible "$@"
+}
+
+ansible-playbook() {
+  ansible /usr/local/bin/ansible-playbook "$@"
+}
+
+ansible_build
+
+[[ ${1:-} != "--" ]] || { shift 1; ansible "$@"; exit 0; }
+
+ansible-playbook -b -v  "$@"
+
