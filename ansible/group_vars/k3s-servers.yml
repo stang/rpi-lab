@@ -1,0 +1,3 @@
+k3s_service_name: k3s
+k3s_service_type: notify
+k3s_cmd_exec: server

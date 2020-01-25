@@ -30,5 +30,5 @@ ansible_build
 
 [[ ${1:-} != "--" ]] || { shift 1; ansible "$@"; exit 0; }
 
-ansible-playbook -b -v  "$@"
+ansible-playbook -v  "$@"
 

@@ -1,0 +1,34 @@
+---
+- name: check k3s version
+  uri:
+    url: "https://api.github.com/repos/rancher/k3s/releases/tags/{{ k3s_version }}"
+  run_once: true
+  delegate_to: localhost
+
+# currently catter for 'armhf' only
+- name: validate server architecture
+  fail:
+    msg: "This playbook does not support the following architecture: {{ ansible_facts.architecture }} "
+  when: not (
+              ansible_facts["architecture"] is search("arm")
+              and
+              ansible_facts.userspace_bits == "32"
+            )
+
+- name: validate system manager
+  fail:
+    msg: "This playbook is compatible with 'systemd' only"
+  when: ansible_facts.service_mgr != "systemd"
+
+- name: enable container features
+  become: yes
+  when: ansible_facts["architecture"] is search("arm")
+  lineinfile:
+    path: /boot/cmdline.txt
+    regexp: '^(.*rootwait)$'
+    line: '\1 cgroup_enable=cpuset cgroup_memory=1 cgroup_enable=memory'
+    backrefs: true
+  notify: reboot server
+
+- name: trigger reboot server if needed
+  meta: flush_handlers

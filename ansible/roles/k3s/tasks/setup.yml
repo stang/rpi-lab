@@ -1,0 +1,57 @@
+- name: retrieve node-token only on agents to avoid chicken-egg issue
+  block:
+  - name: read node-token
+    slurp:
+      src: "{{ k3s_node_token_path }}"
+    register: token
+    changed_when: false
+    run_once: true
+    delegate_to: "{{ groups['k3s-servers'][0] }}"
+    become: true
+
+  - name: decode node-token
+    set_fact:
+     k3s_node_token: "{{ token.content | b64decode | regex_replace('\n', '') }}"
+
+  when: "'k3s-agents' in group_names"
+
+
+- name: download k3s binary
+  get_url:
+    url: "{{ k3s_bin_url }}"
+    dest: "{{ k3s_bin }}"
+    checksum: "sha256:{{ k3s_sha_url }}"
+    owner: root
+    group: root
+    mode: 755
+  when: k3s_download_required
+  notify: restart k3s
+  become: true
+
+- name: install k3s service unit
+  become: true
+  template:
+    src: k3s.service.j2
+    dest: "{{ systemd_dir }}/{{ k3s_service_name }}.service"
+    owner: root
+    group: root
+    mode: 0644
+  notify: restart k3s
+
+- name: install k3s service env
+  become: true
+  template:
+    src: k3s.service.env.j2
+    dest: "{{ systemd_dir }}/{{ k3s_service_name }}.service.env"
+    owner: root
+    group: root
+    mode: 0400
+  notify: restart k3s
+
+- name: enable k3s service
+  systemd:
+    name: "{{ k3s_service_name }}"
+    daemon_reload: yes
+    state: started
+    enabled: yes
+  become: true

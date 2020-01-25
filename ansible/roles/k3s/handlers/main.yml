@@ -1,0 +1,10 @@
+---
+- name: reboot server
+  become: yes
+  reboot:
+
+- name: restart k3s
+  become: yes
+  service:
+    name: "{{ k3s_service_name }}"
+    state: restarted

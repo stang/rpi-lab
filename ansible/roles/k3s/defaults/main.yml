@@ -1,0 +1,13 @@
+# Which version of k3s to install
+# see: https://github.com/rancher/k3s/releases
+k3s_version: v1.17.0+k3s.1
+
+k3s_bin_url: https://github.com/rancher/k3s/releases/download/{{ k3s_version }}/k3s-armhf
+k3s_sha_url: https://github.com/rancher/k3s/releases/download/{{ k3s_version }}/sha256sum-arm.txt
+k3s_bin: /usr/local/bin/k3s
+k3s_node_token_path: /var/lib/rancher/k3s/server/node-token
+
+k3s_server_port: 6443
+k3s_server_url: "https://{{ hostvars[groups['k3s-servers'][0]]['ansible_host'] }}:{{ k3s_server_port }}"
+
+systemd_dir: /etc/systemd/system

@@ -1,0 +1,9 @@
+- include_tasks: prerequisites.yml
+- include_tasks: preps.yml
+
+- include_tasks: setup.yml
+  when: "'k3s-servers' in group_names"
+
+# explicitly configure agents **AFTER** the servers so the 'node-token' is available
+- include_tasks: setup.yml
+  when: "'k3s-agents' in group_names"

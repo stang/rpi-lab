@@ -1,0 +1,14 @@
+---
+- name: check k3s binary
+  stat:
+    path: "{{ k3s_bin }}"
+  register: k3s
+
+- name: retrieve existing k3s version
+  shell: "{{ k3s_bin }} --version"
+  register: k3s_ver
+  when: k3s.stat.exists == true
+  changed_when: false
+
+- set_fact:
+    k3s_download_required: "{{ k3s.stat.exists == false or k3s_version|string not in k3s_ver.stdout }}"
