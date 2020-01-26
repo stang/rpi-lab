@@ -14,4 +14,7 @@ It leverage `docker` to minimize local dependencies.
 ```
 # adjust 'inventory/' as needed
 ./ansible-playbook -i ./inventory setup.yml
+
+# to configure kubectl on the host machine (must be run **AFTER** the server setup)
+./ansible-playbook -i ./inventory setup.yml -t kubectl
 ```

@@ -15,6 +15,7 @@ ansible() {
   docker run --init=false -it --rm --user=1000:1000 --net=host \
     --mount type=tmpfs,destination=/home/ansible \
     -v ${HOME}/.ssh:/home/ansible/.ssh:ro \
+    -v ${HOME}/.kube:/home/ansible/.kube \
     -v ${PWD}:/workdir --workdir /workdir \
     -v /run/host-services/ssh-auth.sock:/run/host-services/ssh-auth.sock \
     -e SSH_AUTH_SOCK=/run/host-services/ssh-auth.sock \

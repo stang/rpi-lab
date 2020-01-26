@@ -1,0 +1,43 @@
+- name: retrieve cluster info from a server node
+  block:
+  - name: read kubeconfig
+    slurp:
+      src: "{{ k3s_kubeconfig_path }}"
+    register: kubecfg
+    changed_when: false
+    delegate_to: "{{ groups['k3s-servers'][0] }}"
+    become: true
+
+  - name: parse kubeconfig
+    set_fact:
+     kubeconfig: "{{ kubecfg.content | b64decode | from_yaml }}"
+
+  - name: extract cluster info
+    set_fact:
+      k_cert: "{{ kubeconfig.clusters[0].cluster['certificate-authority-data'] }}"
+      k_username: "{{ kubeconfig.users[0].user.username }}"
+      k_password: "{{ kubeconfig.users[0].user.password }}"
+
+  - name: configure cluster
+    shell: "kubectl config set-cluster {{ k3s_cluster_name }} --server={{ k3s_server_url }}"
+    delegate_to: localhost
+
+  - name: configure cluster cert
+    # see: https://github.com/kubernetes/kubectl/issues/501#issuecomment-406890261
+    shell: "kubectl config set clusters.{{ k3s_cluster_name }}.certificate-authority-data {{ k_cert }}"
+    delegate_to: localhost
+
+  - name: configure cluster credentials
+    shell: "kubectl config set-credentials {{ k3s_cluster_name }} --username={{ k_username }} --password={{ k_password }}"
+    delegate_to: localhost
+
+  - name: configure context
+    shell: "kubectl config set-context {{ k3s_cluster_name }} --cluster={{ k3s_cluster_name }} --namespace=default --user={{ k3s_cluster_name }}"
+    delegate_to: localhost
+
+  - name: select context
+    shell: "kubectl config use-context {{ k3s_cluster_name }}"
+    delegate_to: localhost
+
+  no_log: true
+  run_once: true

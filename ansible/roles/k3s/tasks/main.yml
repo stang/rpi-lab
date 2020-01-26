@@ -7,3 +7,7 @@
 # explicitly configure agents **AFTER** the servers so the 'node-token' is available
 - include_tasks: setup.yml
   when: "'k3s-agents' in group_names"
+
+# only runs if tag is explicitly mentioned
+- import_tasks: kubectl-config.yml
+  tags: never, kubectl
